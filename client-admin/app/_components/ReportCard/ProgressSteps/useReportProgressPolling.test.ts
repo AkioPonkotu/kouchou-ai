@@ -143,7 +143,7 @@ describe("useReportProgressPoll", () => {
     });
   });
 
-  it("失敗したリクエストがmaxRetriesまでリトライされる", async () => {
+  it("失敗したリクエストが最大連続失敗回数までリトライされる", async () => {
     mockFetch
       .mockRejectedValueOnce(new Error("Network error"))
       .mockRejectedValueOnce(new Error("Network error"))
@@ -175,8 +175,8 @@ describe("useReportProgressPoll", () => {
     });
   });
 
-  it("最大リトライ回数後にエラーが設定される", async () => {
-    // maxRetriesより1多い11回の失敗した試行をモック
+  it("最大連続失敗回数後にエラーが設定される", async () => {
+    // maxConsecutiveFailuresより1多い11回の失敗した試行をモック
     for (let i = 0; i < 11; i++) {
       mockFetch.mockResolvedValueOnce({
         ok: false,
