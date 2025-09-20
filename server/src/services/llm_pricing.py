@@ -48,11 +48,25 @@ class LLMPricing:
         if provider not in cls.PRICING:
             return cls._calculate_with_price(cls.DEFAULT_PRICE, token_usage_input, token_usage_output)
 
+        model = cls._normalize_model(provider, model)
+
         if model not in cls.PRICING[provider]:
             return cls._calculate_with_price(cls.DEFAULT_PRICE, token_usage_input, token_usage_output)
 
         price = cls.PRICING[provider][model]
         return cls._calculate_with_price(price, token_usage_input, token_usage_output)
+
+    @classmethod
+    def _normalize_model(cls, provider: str, model: str) -> str:
+        """既知のモデルIDに正規化する"""
+
+        if provider == "gemini":
+            normalized = model.removeprefix("models/")
+            if normalized.startswith("gemini-2.5-flash"):
+                return "gemini-2.5-flash"
+            return normalized
+
+        return model
 
     @staticmethod
     def _calculate_with_price(price: dict[str, float], token_usage_input: int, token_usage_output: int) -> float:
