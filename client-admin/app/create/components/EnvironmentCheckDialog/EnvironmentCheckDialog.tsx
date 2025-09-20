@@ -17,10 +17,13 @@ import { startTransition, useActionState, useState } from "react";
 import { ErrorIcon } from "./ErrorIcon";
 import { GradientCheckIcon } from "./GradientCheckIcon";
 import { verifyApiKey } from "./verifyApiKey";
-import { useAISettings } from "../../hooks/useAISettings";
+import { type Provider } from "../../hooks/useAISettings";
 
-function Dialog() {
-  const { provider } = useAISettings();
+type EnvironmentCheckDialogProps = {
+  provider: Provider;
+};
+
+function Dialog({ provider }: EnvironmentCheckDialogProps) {
   const [state, action, isPending] = useActionState(verifyApiKey.bind(null, provider), {
     result: null,
     error: false,
@@ -141,7 +144,7 @@ function Dialog() {
   );
 }
 
-export function EnvironmentCheckDialog() {
+export function EnvironmentCheckDialog({ provider }: EnvironmentCheckDialogProps) {
   const [uuid, setUUID] = useState(crypto.randomUUID());
 
   return (
@@ -168,7 +171,7 @@ export function EnvironmentCheckDialog() {
           API接続チェック <SquareArrowOutUpRight />
         </Button>
       </DialogTrigger>
-      <Dialog />
+      <Dialog provider={provider} />
     </DialogRoot>
   );
 }

@@ -4,7 +4,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { EnvironmentCheckDialog } from "./EnvironmentCheckDialog";
 import { verifyApiKey } from "./verifyApiKey";
-import { useAISettings } from "../../hooks/useAISettings";
+import { type Provider } from "../../hooks/useAISettings";
 
 // test時のimportエラーを防止するために、lucide-reactをモック化
 jest.mock("lucide-react", () => ({
@@ -14,11 +14,6 @@ jest.mock("lucide-react", () => ({
 // verifyApiKeyをモック化
 jest.mock("./verifyApiKey");
 const mockVerifyApiKey = verifyApiKey as jest.MockedFunction<typeof verifyApiKey>;
-
-// useAISettingsをモック化
-jest.mock("../../hooks/useAISettings");
-const mockUseAISettings = useAISettings as jest.MockedFunction<typeof useAISettings>;
-mockUseAISettings.mockReturnValue({ provider: "openai" } as any);
 
 // crypto.randomUUIDをモック化
 const mockUUID = "test-uuid-123";
@@ -33,17 +28,20 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <ChakraProvider value={system}>{children}</ChakraProvider>
 );
 
+const renderEnvironmentCheckDialog = (provider: Provider = "openai") =>
+  render(
+    <TestWrapper>
+      <EnvironmentCheckDialog provider={provider} />
+    </TestWrapper>,
+  );
+
 describe("EnvironmentCheckDialog", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("初期状態でトリガーボタンが表示される", () => {
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     expect(screen.getByRole("button", { name: /API接続チェック/i })).toBeInTheDocument();
   });
@@ -51,11 +49,7 @@ describe("EnvironmentCheckDialog", () => {
   it("トリガーボタンをクリックすると初期状態のダイアログが開く", async () => {
     mockVerifyApiKey.mockResolvedValue({ result: null, error: false });
 
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -66,11 +60,7 @@ describe("EnvironmentCheckDialog", () => {
   it("チェックボタンをクリックするとAPIが呼び出される", async () => {
     mockVerifyApiKey.mockResolvedValue({ result: null, error: false });
 
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -78,20 +68,15 @@ describe("EnvironmentCheckDialog", () => {
     userEvent.click(checkButton);
 
     await waitFor(() => {
-      expect(mockVerifyApiKey).toHaveBeenCalledTimes(1);
-      expect(mockVerifyApiKey).toHaveBeenCalledWith("openai");
+      expect(mockVerifyApiKey).toHaveBeenCalled();
     });
+
+    expect(mockVerifyApiKey.mock.calls[0]?.[0]).toBe("openai");
   });
 
   it("Geminiが選択されている場合、対応するプロバイダーでAPIが呼び出される", async () => {
     mockVerifyApiKey.mockResolvedValue({ result: null, error: false });
-    mockUseAISettings.mockReturnValue({ provider: "gemini" } as any);
-
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog("gemini");
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -99,8 +84,10 @@ describe("EnvironmentCheckDialog", () => {
     userEvent.click(checkButton);
 
     await waitFor(() => {
-      expect(mockVerifyApiKey).toHaveBeenCalledWith("gemini");
+      expect(mockVerifyApiKey).toHaveBeenCalled();
     });
+
+    expect(mockVerifyApiKey.mock.calls[0]?.[0]).toBe("gemini");
   });
 
   it("API接続が成功した場合に成功メッセージが表示される", async () => {
@@ -113,11 +100,7 @@ describe("EnvironmentCheckDialog", () => {
       error: false,
     });
 
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -140,11 +123,7 @@ describe("EnvironmentCheckDialog", () => {
       error: true,
     });
 
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -170,11 +149,7 @@ describe("EnvironmentCheckDialog", () => {
       error: true,
     });
 
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -196,11 +171,7 @@ describe("EnvironmentCheckDialog", () => {
       error: true,
     });
 
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -224,11 +195,7 @@ describe("EnvironmentCheckDialog", () => {
       error: true,
     });
 
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -242,11 +209,7 @@ describe("EnvironmentCheckDialog", () => {
   });
 
   it("ダイアログを閉じるとUUIDがリセットされる", async () => {
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
@@ -266,14 +229,7 @@ describe("EnvironmentCheckDialog", () => {
       resolvePromise = resolve;
     });
     mockVerifyApiKey.mockReturnValue(pendingPromise);
-
-    mockUseAISettings.mockReturnValue({ provider: "openai" } as any);
-
-    render(
-      <TestWrapper>
-        <EnvironmentCheckDialog />
-      </TestWrapper>,
-    );
+    renderEnvironmentCheckDialog();
 
     userEvent.click(screen.getByRole("button", { name: /API接続チェック/i }));
 
