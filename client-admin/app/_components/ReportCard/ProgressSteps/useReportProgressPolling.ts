@@ -12,8 +12,9 @@ export function useReportProgressPoll(slug: string) {
     if (!isPolling) return;
 
     let cancelled = false;
-    let retryCount = 0;
-    const maxRetries = 10;
+    // Count of consecutive failed polling attempts
+    let consecutiveFailureCount = 0;
+    const maxConsecutiveFailures = 10;
 
     async function poll() {
       if (cancelled) return;
@@ -30,10 +31,11 @@ export function useReportProgressPoll(slug: string) {
         });
 
         if (response.ok) {
+          // Reset failure count on any successful response
+          consecutiveFailureCount = 0;
           const data = await response.json();
 
           if (!data.current_step || data.current_step === "loading") {
-            retryCount = 0;
             setTimeout(poll, 3000);
             return;
           }
@@ -54,20 +56,20 @@ export function useReportProgressPoll(slug: string) {
           // 正常なレスポンスの場合は次のポーリングをスケジュール
           setTimeout(poll, 3000);
         } else {
-          retryCount++;
-          if (retryCount >= maxRetries) {
+          consecutiveFailureCount++;
+          if (consecutiveFailureCount >= maxConsecutiveFailures) {
             console.error("Maximum retry attempts reached");
             setIsError(true);
             setIsPolling(false);
             return;
           }
-          const retryInterval = retryCount < 3 ? 2000 : 5000;
+          const retryInterval = consecutiveFailureCount < 3 ? 2000 : 5000;
           setTimeout(poll, retryInterval);
         }
       } catch (error) {
         console.error("Polling error:", error);
-        retryCount++;
-        if (retryCount >= maxRetries) {
+        consecutiveFailureCount++;
+        if (consecutiveFailureCount >= maxConsecutiveFailures) {
           setIsError(true);
           setIsPolling(false);
           return;
